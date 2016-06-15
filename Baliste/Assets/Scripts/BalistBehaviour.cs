@@ -133,9 +133,11 @@ public class BalistBehaviour : MonoBehaviour {
 			Debug.DrawRay(this.transform.position, this.transform.up ,Color.red);
 
 			Quaternion tmpTargetRotation = Quaternion.FromToRotation(this.transform.up, tmpFinalRotationVector);
-			tmpTargetRotation.Set(tmpTargetRotation.x, this.transform.rotation.y, tmpTargetRotation.z, tmpTargetRotation.w);
+			Quaternion tmpCurrentRot = this.transform.rotation;
+
+			//tmpTargetRotation.Set(tmpTargetRotation.x, this.transform.rotation.y, tmpTargetRotation.z, tmpTargetRotation.w);
 			//this.transform.up = Vector3.Lerp(this.transform.rotation.eulerAngles, tmpTargetRotation, Time.smoothDeltaTime * 50);
-			this.transform.rotation = Quaternion.LerpUnclamped(this.transform.rotation, tmpTargetRotation, 1);
+			//this.transform.rotation = Quaternion.LerpUnclamped(this.transform.rotation, tmpTargetRotation, 1);
 		}
 
 		// Direction
