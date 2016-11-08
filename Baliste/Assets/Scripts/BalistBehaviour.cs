@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -28,6 +29,7 @@ public class BalistBehaviour : MonoBehaviour {
 	public float _balistHorizontalSpeed = 1.0f;
 	public float _balistVerticalSpeed = 1.0f;
 	public float _balistZCorrection = 0.35f;
+    public float _MaxWheelHeightValue = 1.0f;
 
 	public Transform[] _wheelsTranformArray;
 
@@ -67,8 +69,17 @@ public class BalistBehaviour : MonoBehaviour {
 		_balistLight.color = targetColor;
 	}
 
-	// MOVEMENT
-	public void BalistMovement (){
+    // MOVEMENT
+    struct Wheel
+    {
+
+        public float distance;
+        public Vector3 point;
+    };
+
+    public bool lol = true;
+
+    public void BalistMovement (){
 		//ZPosition
 		RaycastHit hit;
 		if (Physics.Raycast(transform.position, -Vector3.up, out hit)){
@@ -79,15 +90,54 @@ public class BalistBehaviour : MonoBehaviour {
 
 		//Balist Orientation
 		Vector3[] tmpWheelTargetPosArray = new Vector3[4];
-		for (int i = 0 ; i < _wheelsTranformArray.Length ; i++){
+        Wheel[] tmpRayDistanceArray = new Wheel[4];
+        for (int i = 0 ; i < _wheelsTranformArray.Length ; i++){
 			RaycastHit whit;
 			if (Physics.Raycast(_wheelsTranformArray[i].position + Vector3.up, -Vector3.up * 10, out whit)){
-				Vector3 tmpWheelTargetPos = whit.point;
-				tmpWheelTargetPosArray[i] = tmpWheelTargetPos;
-			}
-		}
+                tmpWheelTargetPosArray[i] = whit.point;
+                tmpRayDistanceArray[i] = new Wheel();
+                tmpRayDistanceArray[i].distance = whit.distance;
 
-		if (tmpWheelTargetPosArray.Length == 4) {
+                tmpRayDistanceArray[i].point = whit.point;
+            }
+        }
+
+        Vector3[] tmpWheelPointToProcess = new Vector3[3];
+        tmpWheelPointToProcess[0] = tmpRayDistanceArray[1].point;
+        tmpWheelPointToProcess[1] = tmpRayDistanceArray[2].point;
+        if (tmpRayDistanceArray[0].distance < tmpRayDistanceArray[3].distance)
+        {
+            tmpWheelPointToProcess[2] = tmpRayDistanceArray[0].point;
+            Debug.DrawRay(tmpRayDistanceArray[3].point, Vector3.up, Color.red);
+        }
+        else
+        {
+            tmpWheelPointToProcess[2] = tmpRayDistanceArray[3].point;
+            Debug.DrawRay(tmpRayDistanceArray[0].point, Vector3.up, Color.red);
+        }
+
+        
+
+        bool tmpThreeWheelsCompute = false;
+        if (tmpThreeWheelsCompute)
+        {
+            Vector3 side1 = tmpWheelPointToProcess[0] - tmpWheelPointToProcess[1];
+            Vector3 side2 = tmpWheelPointToProcess[0] - tmpWheelPointToProcess[2];
+            Vector3 perp1 = Vector3.Cross(side1, side2) * -1;
+            if (perp1.y < 0.0f)
+            {
+                perp1 = -perp1;
+            }
+
+            Vector3 tmpMiddlePoint = ((tmpWheelPointToProcess[0] + tmpWheelPointToProcess[1] + tmpWheelPointToProcess[2]) / 3);
+            Debug.DrawRay(tmpMiddlePoint, perp1, Color.blue);
+
+            Quaternion tmpCurrentRotation = this.transform.rotation;
+            this.transform.rotation = Quaternion.FromToRotation(this.transform.up, perp1) * this.transform.rotation;
+        }
+
+        bool tmpFourWheelsCompute = true;
+		if (tmpFourWheelsCompute) {
 			Vector3 side1 = tmpWheelTargetPosArray [0] - tmpWheelTargetPosArray [1];
 			Vector3 side2 = tmpWheelTargetPosArray [0] - tmpWheelTargetPosArray [2];
 			Vector3 perp1 = Vector3.Cross(side1, side2) * -1 ;
@@ -113,10 +163,13 @@ public class BalistBehaviour : MonoBehaviour {
 			Debug.DrawRay(tmpMiddlePoint4, perp4,Color.yellow);
 
 			Vector3 tmpFinalRotationVector = ((perp1 + perp2 + perp3 + perp4) / 4);
-			Debug.DrawRay(this.transform.position, tmpFinalRotationVector ,Color.green);
-			Debug.DrawRay(this.transform.position, this.transform.up ,Color.red);
+			//Debug.DrawRay(this.transform.position, tmpFinalRotationVector ,Color.green);
+			//Debug.DrawRay(this.transform.position, this.transform.up ,Color.red);
 
-			this.transform.rotation = Quaternion.FromToRotation(this.transform.up, tmpFinalRotationVector) * this.transform.rotation;
+            this.transform.rotation = Quaternion.Lerp(this.transform.rotation, Quaternion.FromToRotation(this.transform.up, tmpFinalRotationVector) * this.transform.rotation, _MaxWheelHeightValue);
+
+            //print("Old rotation : " + tmpCurrentRotation + "| New Rotation : " + this.transform.rotation);
+
 		}
 
 		// Direction
@@ -125,9 +178,13 @@ public class BalistBehaviour : MonoBehaviour {
 		this.transform.Translate (tmpDirection);
 
 		//Orientation
-		Vector3 tmpRotation = Vector3.zero;
-		tmpRotation.y = (Input.GetAxis(_controls.BalistHorizontal)) * _balistHorizontalSpeed;
-		this.transform.Rotate (tmpRotation);
+        if (lol)
+        {
+            Vector3 tmpRotation = Vector3.zero;
+            tmpRotation.y = (Input.GetAxis(_controls.BalistHorizontal)) * _balistHorizontalSpeed;
+            this.transform.Rotate(tmpRotation);
+        }
+		
 	}
 
 	// ATTACK
