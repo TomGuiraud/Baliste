@@ -36,8 +36,9 @@ public class BalistBehaviour : MonoBehaviour {
 	// Projectile Variables
 	public GameObject projectile;
 	public Transform projectileLaunchPoint;
-	public AnimationCurve _projectileCurve;
-	public float projectileStrenght;
+
+	//Trajectory Feedback
+	public LineRenderer _trajFeedback;
 
 	//Mesh
 	public MeshRenderer[] _mesheRendererArray;
@@ -45,6 +46,9 @@ public class BalistBehaviour : MonoBehaviour {
 	//Light
 	public Light _balistLight;
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////FUNCTIONS///////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// Use this for initialization
 	void Start () {
@@ -55,6 +59,7 @@ public class BalistBehaviour : MonoBehaviour {
 	void Update () {
 		Attack();
 		BalistMovement ();
+		ComputeTrajectory ();
 	}
 
 	void FixedUpdate () {
@@ -191,14 +196,27 @@ public class BalistBehaviour : MonoBehaviour {
 	public void Attack (){
 		if (Input.GetKeyDown(KeyCode.Space)){
 			GameObject tmpProj = Instantiate(projectile,projectileLaunchPoint.transform.position, projectileLaunchPoint.transform.rotation) as GameObject;
-			Physics.IgnoreCollision(tmpProj.GetComponent<Collider>(), balistColl);
-			tmpProj.GetComponent<Rigidbody>().AddForce(tmpProj.transform.forward * projectileStrenght);
+		}
+	}
 
-			//Back Fire
+	public void ComputeTrajectory (){
 
-			//Test Attack
-			print (Camera.main);
-			//Camera.main.GetComponent<CameraBehaviour>().Shake(10.0f, 5.0f);
+		Vector3 tmpTargetBeginningPosition = projectileLaunchPoint.position;
+		Vector3 tmpTargetEndingPosition = Vector3.zero;
+		RaycastHit hit;
+		if (Physics.Raycast((projectileLaunchPoint.position + (this.transform.forward * 10) + (Vector3.up * 10)), -Vector3.up * 10, out hit)){
+			tmpTargetEndingPosition = hit.point;
+		}
+
+		Vector3 tmpTargetDirection = tmpTargetEndingPosition - tmpTargetBeginningPosition;
+		float tmpTargetDistance = Vector3.Distance(tmpTargetEndingPosition, tmpTargetBeginningPosition);
+		float tmpFiringAngle = Vector3.Angle(projectileLaunchPoint.forward, tmpTargetDirection);
+
+		Vector3[] tmpTrajectoryPoints = new Vector3[10];
+		for (int i = 0 ; i < 10 ; i++){
+			tmpTrajectoryPoints[i] = (tmpTargetDirection/10) * (i+1);
+			tmpTrajectoryPoints[i].y *= Mathf.Sin(i * Mathf.PI) * 20.0f;
+			_trajFeedback.SetPosition(i, tmpTargetBeginningPosition + tmpTrajectoryPoints[i]);
 		}
 	}
 
