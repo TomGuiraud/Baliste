@@ -204,35 +204,44 @@ public class BalistBehaviour : MonoBehaviour {
 	public void Attack (){
 		if (Input.GetKeyDown(KeyCode.Space)){
 			GameObject tmpProj = Instantiate(projectile,projectileLaunchPoint.transform.position, projectileLaunchPoint.transform.rotation) as GameObject;
-		}
-	}
+            ProjectileBehaviour tmpProjBH = tmpProj.GetComponent<ProjectileBehaviour>();
 
+            Vector3 tmpTargetDirection = projectileLaunchPoint.forward;
+            tmpTargetDirection.y = 0.0f;
+            tmpTargetDirection.Normalize();
+            tmpProjBH._initDirection = tmpTargetDirection;
+
+            tmpProjBH._initFiringAngle = Vector3.Angle(projectileLaunchPoint.forward, tmpTargetDirection) * Mathf.Deg2Rad;
+            tmpProjBH._initForce = 13.0f;
+            tmpProjBH._gravityValue = -10.0f;
+        }
+	}
+    public float step = 0.016f;
     public void ComputeTrajectory()
     {
-        Vector3 tmpTargetDirection = transform.forward;
+        Vector3 tmpTargetDirection = projectileLaunchPoint.forward;
         tmpTargetDirection.y = 0.0f;
         tmpTargetDirection.Normalize();
 
         float tmpFiringAngle = Vector3.Angle(projectileLaunchPoint.forward, tmpTargetDirection) * Mathf.Deg2Rad;
         float tmpProjectileForce = 13.0f;
         float gravity = -10.0f;
-        float tmpVoy = Mathf.Sin(tmpFiringAngle) * tmpProjectileForce;
         float tmpVox = Mathf.Cos(tmpFiringAngle) * tmpProjectileForce;
+        float tmpVoy = Mathf.Sin(tmpFiringAngle) * tmpProjectileForce;
 
+        Vector3 initialPos = projectileLaunchPoint.position;
         Vector3 pos = projectileLaunchPoint.position;
-        float step = 0.1f;
-        _trajFeedback.SetVertexCount(40);
+        _trajFeedback.SetVertexCount(200);
         _trajFeedback.SetPosition(0, pos);
-        for (int i = 1; i < 40; i++)
+        for (int i = 1; i < 200; i++)
         {
-            tmpVoy += gravity * step;
+            //tmpVoy += gravity * step;
 
-            pos += tmpTargetDirection * tmpVox * step; // Deplacement horizontal
-            pos += Vector3.up * tmpVoy * step; // Deplacement vertical
+            pos = projectileLaunchPoint.transform.position + (((tmpTargetDirection * tmpVox) + (Vector3.up * tmpVoy + (Vector3.up * gravity * i * step))) * i * step);
+            /*pos += tmpTargetDirection * tmpVox * step; // Deplacement horizontal
+            pos += Vector3.up * tmpVoy * step; // Deplacement vertical*/
 
             _trajFeedback.SetPosition(i, pos);
         }
-
-
     }
 }
