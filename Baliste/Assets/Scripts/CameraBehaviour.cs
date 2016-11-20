@@ -3,6 +3,9 @@ using System.Collections;
 
 public class CameraBehaviour : MonoBehaviour {
 
+	//Singleton
+	public static CameraBehaviour _singleton;
+
 	[SerializeField] private Transform _cameraMaxZoom;
 	[SerializeField] private float _cameraSpeed;
 	[SerializeField] private float _CamDistRef;
@@ -12,6 +15,12 @@ public class CameraBehaviour : MonoBehaviour {
 	private float _timeLeftToShake;
 	private float _shakeDuration;
 	private float _shakeStrength;
+
+	void Awake () {
+		if (_singleton == null){
+			_singleton = this;
+		}
+	}
 
 	// Use this for initialization
 	void Start () {
@@ -26,16 +35,16 @@ public class CameraBehaviour : MonoBehaviour {
 	void CameraPositionner (){
 		// Initial Position Computing
 		Vector3 tmpGravityCenter = Vector3.zero;
-		for (int i = 0 ; i < GameManager._singleton._playerNumbers ; i ++){
+		for (int i = 0 ; i < GameManager._singleton._currentPlayerAliveNumber ; i ++){
 			Vector3 tmpBalistPosition = GameManager._singleton._playerTransformArray[i].position;
 			tmpGravityCenter += tmpBalistPosition;
 		}
 
-		tmpGravityCenter = tmpGravityCenter/GameManager._singleton._playerNumbers;
+		tmpGravityCenter = tmpGravityCenter/GameManager._singleton._currentPlayerAliveNumber;
 		this.transform.LookAt(tmpGravityCenter);
 
 		float tmpFarestPlayerDistFromGC = 0.0f;
-		for (int j = 0 ; j < GameManager._singleton._playerNumbers ; j ++){
+		for (int j = 0 ; j < GameManager._singleton._currentPlayerAliveNumber ; j ++){
 			float tmpDistWithGC = Vector3.Distance(GameManager._singleton._playerTransformArray[j].position, tmpGravityCenter);
 			if (tmpDistWithGC > tmpFarestPlayerDistFromGC){
 				tmpFarestPlayerDistFromGC = tmpDistWithGC;
@@ -47,6 +56,7 @@ public class CameraBehaviour : MonoBehaviour {
 		float tmpCamSpeed = _cameraSpeed;
 		//ShakyCam Modifier
 		if (_timeLeftToShake > 0.0f ){
+			print ("Shake !");
 			_timeLeftToShake -= Time.deltaTime;
 			float tmpStrengthAttenuation = (_timeLeftToShake/_shakeDuration);
 			print (_shakeStrength);
